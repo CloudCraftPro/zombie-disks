@@ -1,0 +1,2 @@
+# Only third-party dep — vSphere SDK
+pyvmomi>=7.0.0

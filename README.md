@@ -1,6 +1,32 @@
-# zombie_disks.py
+# zombie-disks
 
 A two-pass, recoverable cleaner for orphaned VMDK files on VMware vSphere datastores. Built for environments where Druva / Broadcom integration leaves behind hundreds of stranded `.vmdk` files every month while a permanent fix is pending.
+
+## Quickstart
+
+```bash
+git clone https://github.com/CloudCraftPro/zombie-disks.git
+cd zombie-disks
+pip3 install -r requirements.txt
+
+export VCENTER_HOST=vcenter.example.com
+export VCENTER_USER='svc-cleanup@vsphere.local'
+export VCENTER_PASS='your-password'
+
+# dry-run (no changes, no --apply)
+python3 zombie_disks.py mark --insecure
+
+# when you like the dry-run output, do it for real
+python3 zombie_disks.py mark --insecure --apply
+
+# 7+ days later, delete the renamed files
+python3 zombie_disks.py sweep --insecure --apply
+```
+
+That's the whole loop. Everything is logged to `./logs/*.csv`. Drop `--insecure` if your vCenter has a trusted cert. See the rest of this README for knobs, safety, and recovery.
+
+---
+
 
 ## What "zombie" means here
 
@@ -23,8 +49,10 @@ Both passes default to `--dry-run`. You must pass `--apply` to actually change s
 Requires Python 3.8+.
 
 ```bash
-pip3 install pyvmomi
+pip3 install -r requirements.txt
 ```
+
+(Or `pip3 install pyvmomi` — it's the only dependency.)
 
 ## Configure
 
@@ -120,3 +148,7 @@ A 7-day window has proven a good balance: long enough that an accidental flaggin
 ## Why not just delete in one pass?
 
 Because Druva-related orphans sometimes look exactly like legitimate disks that just *aren't actively attached at the moment* (e.g., a VM mid-storage-vMotion, a snapshot being consolidated, a template being cloned). The rename pass is a soft-quarantine: vCenter ignores the file, no backup picks it up, but everything stays recoverable for a week. If something was misidentified, someone hits "my VM is broken" inside the window, and you have time to undo.
+
+## License
+
+[MIT](LICENSE) © 2026 Bryan Elliott
